@@ -1,0 +1,7 @@
+const test=require('node:test');const assert=require('node:assert/strict');const G=require('./game.js');
+test('new game has distinct words and valid random codes',()=>{for(let i=0;i<100;i++){const s=G.create(['a','b']);assert.equal(new Set(s.words.flat()).size,8);assert.ok(G.valid(s.code));}});
+test('invalid guesses do not mutate game',()=>{const s=G.create(['a','b']);const before=JSON.stringify(s);assert.throws(()=>G.judge(s,'111',''));assert.equal(JSON.stringify(s),before);});
+test('round one cannot intercept; both teams get a turn',()=>{const s=G.create(['a','b']);G.judge(s,s.code,s.code);assert.deepEqual(s.intercepts,[0,0]);assert.equal(s.team,1);G.judge(s,s.code,s.code);assert.equal(s.round,2);assert.equal(s.team,0);assert.equal(s.winner,null);});
+test('victory is evaluated after both teams have played',()=>{const s=G.create(['a','b']);s.round=2;s.intercepts=[1,0];G.judge(s,s.code,s.code);assert.equal(s.winner,null);G.judge(s,s.code,s.code);assert.equal(s.winner,0);assert.equal(s.stage,'finished');});
+test('simultaneous second intercept uses tie rule',()=>{const s=G.create(['a','b']);s.round=2;s.intercepts=[1,1];G.judge(s,s.code,s.code);G.judge(s,s.code,s.code);assert.equal(s.winner,'draw');});
+test('eight rounds end even without errors or interceptions',()=>{const s=G.create(['a','b']);for(let i=0;i<16;i++){s.code='123';G.judge(s,'123','124');}assert.equal(s.stage,'finished');assert.equal(s.winner,'draw');assert.equal(s.history.length,16);});
